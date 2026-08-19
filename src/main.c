@@ -5,6 +5,8 @@
 
 #include "token.h"
 #include "lexer.h"
+#include "parser.h"
+#include "expand.h"
 
 #define MAX_TOKENS 100
 
@@ -26,7 +28,6 @@ int main()
             break;
         }
 
-        /* Check for exit command */
         if (strcmp(input, "exit") == 0)
         {
             printf("Exiting ShellForge...\n");
@@ -34,7 +35,6 @@ int main()
             break;
         }
 
-        /* Ignore empty input */
         if (input[0] == '\0')
         {
             free(input);
@@ -45,18 +45,19 @@ int main()
 
         int token_count = lexer_tokenize(input, tokens);
 
-        printf("\n");
-        printf("--------- TOKENS ---------\n\n");
+        printf("\n--------- TOKENS ---------\n\n");
 
         for (int i = 0; i < token_count; i++)
         {
             print_token(tokens[i], i);
         }
 
-        printf("\n");
-        printf("--------------------------\n");
+        printf("\n--------------------------\n");
 
-        /* Free token memory */
+        expand_tokens(tokens, token_count);
+
+        parse_tokens(tokens, token_count);
+
         for (int i = 0; i < token_count; i++)
         {
             free_token(&tokens[i]);
