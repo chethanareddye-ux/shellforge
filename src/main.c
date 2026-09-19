@@ -7,6 +7,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "expand.h"
+#include "builtin.h"
 
 #define MAX_TOKENS 100
 
@@ -28,13 +29,6 @@ int main()
             break;
         }
 
-        if (strcmp(input, "exit") == 0)
-        {
-            printf("Exiting ShellForge...\n");
-            free(input);
-            break;
-        }
-
         if (input[0] == '\0')
         {
             free(input);
@@ -45,18 +39,52 @@ int main()
 
         int token_count = lexer_tokenize(input, tokens);
 
-        printf("\n--------- TOKENS ---------\n\n");
-
-        for (int i = 0; i < token_count; i++)
-        {
-            print_token(tokens[i], i);
-        }
-
-        printf("\n--------------------------\n");
-
         expand_tokens(tokens, token_count);
 
         parse_tokens(tokens, token_count);
+
+        /*
+         * Built-in commands
+         */
+        if (token_count > 0)
+        {
+            char *argv[MAX_TOKENS];
+            int argc = 0;
+
+            for (int i = 0; i < token_count; i++)
+            {
+                argv[argc++] = tokens[i].value;
+            }
+
+            argv[argc] = NULL;
+
+            if (is_builtin(argv[0]))
+            {
+                if (strcmp(argv[0], "cd") == 0)
+                {
+                    builtin_cd(argv);
+                }
+                else if (strcmp(argv[0], "pwd") == 0)
+                {
+                    builtin_pwd(argv);
+                }
+                else if (strcmp(argv[0], "echo") == 0)
+                {
+                    builtin_echo(argv);
+                }
+                else if (strcmp(argv[0], "exit") == 0)
+                {
+                    for (int i = 0; i < token_count; i++)
+                    {
+                        free_token(&tokens[i]);
+                    }
+
+                    free(input);
+
+                    builtin_exit(argv);
+                }
+            }
+        }
 
         for (int i = 0; i < token_count; i++)
         {
