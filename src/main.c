@@ -8,6 +8,7 @@
 #include "parser.h"
 #include "expand.h"
 #include "builtin.h"
+#include "executor.h"
 
 #define MAX_TOKENS 100
 
@@ -43,9 +44,6 @@ int main()
 
         parse_tokens(tokens, token_count);
 
-        /*
-         * Built-in commands
-         */
         if (token_count > 0)
         {
             char *argv[MAX_TOKENS];
@@ -53,35 +51,45 @@ int main()
 
             for (int i = 0; i < token_count; i++)
             {
-                argv[argc++] = tokens[i].value;
+                if (tokens[i].type == TOKEN_WORD)
+                {
+                    argv[argc++] = tokens[i].value;
+                }
             }
 
             argv[argc] = NULL;
 
-            if (is_builtin(argv[0]))
+            if (argc > 0)
             {
-                if (strcmp(argv[0], "cd") == 0)
+                if (is_builtin(argv[0]))
                 {
-                    builtin_cd(argv);
-                }
-                else if (strcmp(argv[0], "pwd") == 0)
-                {
-                    builtin_pwd(argv);
-                }
-                else if (strcmp(argv[0], "echo") == 0)
-                {
-                    builtin_echo(argv);
-                }
-                else if (strcmp(argv[0], "exit") == 0)
-                {
-                    for (int i = 0; i < token_count; i++)
+                    if (strcmp(argv[0], "cd") == 0)
                     {
-                        free_token(&tokens[i]);
+                        builtin_cd(argv);
                     }
+                    else if (strcmp(argv[0], "pwd") == 0)
+                    {
+                        builtin_pwd(argv);
+                    }
+                    else if (strcmp(argv[0], "echo") == 0)
+                    {
+                        builtin_echo(argv);
+                    }
+                    else if (strcmp(argv[0], "exit") == 0)
+                    {
+                        for (int i = 0; i < token_count; i++)
+                        {
+                            free_token(&tokens[i]);
+                        }
 
-                    free(input);
+                        free(input);
 
-                    builtin_exit(argv);
+                        builtin_exit(argv);
+                    }
+                }
+                else
+                {
+                    execute_external(argv);
                 }
             }
         }
